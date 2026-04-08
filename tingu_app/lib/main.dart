@@ -35,7 +35,7 @@ class AppServices {
   });
 }
 
-final appServicesProvider = Provider<AppServices>((ref) {
+final appServicesProvider = StateProvider<AppServices>((ref) {
   throw UnimplementedError('AppServices not initialized');
 });
 
@@ -50,7 +50,7 @@ class StartupState {
   const StartupState({required this.status, required this.message, this.error});
 
   factory StartupState.loading(String msg) =>
-      const StartupState(status: StartupStatus.loading, message: msg);
+      StartupState(status: StartupStatus.loading, message: msg);
 
   factory StartupState.error(String msg) =>
       StartupState(status: StartupStatus.error, message: '启动失败', error: msg);
