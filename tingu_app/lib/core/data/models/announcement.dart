@@ -1,4 +1,4 @@
-import 'announcement_types.dart';
+import '../../constants/announcement_types.dart';
 import 'stock_quote.dart';
 
 class Announcement {
