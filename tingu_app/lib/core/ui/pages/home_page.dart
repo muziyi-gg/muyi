@@ -103,8 +103,8 @@ class _HomePageState extends ConsumerState<HomePage> with TickerProviderStateMix
       ),
       child: Row(
         children: [
-          AnimatedBuilder(
-            animation: _pulseController,
+          ListenableBuilder(
+            listenable: _pulseController,
             builder: (context, child) {
               return Container(
                 width: 12,

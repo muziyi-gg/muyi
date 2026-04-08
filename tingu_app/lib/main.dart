@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive_ce/hive.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/services/storage/hive_storage.dart';
 import 'core/data/datasources/eastmoney_datasource.dart';
@@ -49,8 +49,8 @@ Future<void> main() async {
     statusBarIconBrightness: Brightness.dark,
   ));
 
-  // 初始化 Hive
-  Hive.init('/data/flutter_workspace/hive');
+  // 初始化 Hive（使用 hive_ce_flutter 自动获取平台文档目录）
+  await Hive.initFlutter();
 
   // 初始化存储
   final hiveStorage = HiveStorage();
