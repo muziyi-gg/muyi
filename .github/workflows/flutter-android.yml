@@ -13,6 +13,8 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
+      - name: Accept Android Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
       - run: flutter pub get
         working-directory: ./tingu_app
       - run: flutter build apk --debug
