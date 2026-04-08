@@ -1,6 +1,7 @@
 import '../../data/models/announcement.dart';
 import '../../data/models/stock_quote.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 /// 打断管理器：记录被打断的播报和队列状态
 /// 当高优先级播报（P0/P1）打断正在播放的低优先级播报时，

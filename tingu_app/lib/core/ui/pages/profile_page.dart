@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

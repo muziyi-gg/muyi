@@ -1,5 +1,6 @@
+import '../../constants/announcement_types.dart';
 /// 板块行情数据模型
-import '../../core/constants/announcement_types.dart';
+
 class SectorQuote {
   final String code;
   final String name;

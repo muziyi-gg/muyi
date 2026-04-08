@@ -1,5 +1,6 @@
+import '../../constants/announcement_types.dart';
 /// 用户自选股配置模型
-import '../../core/constants/announcement_types.dart';
+
 class UserStockConfig {
   final String code;
   final String name;

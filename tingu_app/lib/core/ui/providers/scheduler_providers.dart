@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/scheduler/announcement_scheduler.dart';
 import '../../../main.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 /// 调度器状态 Provider
 final schedulerStateProvider = StreamProvider<SchedulerState>((ref) {

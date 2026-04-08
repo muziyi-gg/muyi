@@ -1,5 +1,6 @@
+import '../../constants/announcement_types.dart';
 /// 股票行情数据模型
-import '../../core/constants/announcement_types.dart';
+
 class StockQuote {
   final String code;
   final String name;

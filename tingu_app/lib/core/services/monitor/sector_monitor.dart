@@ -1,7 +1,8 @@
 import '../../data/models/announcement.dart';
 
 import '../../constants/market_constants.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 /// 板块监控器：检测板块异动
 class SectorMonitor {

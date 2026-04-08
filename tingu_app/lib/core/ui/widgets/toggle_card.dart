@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 /// 播报开关卡片
 class ToggleCard extends StatelessWidget {

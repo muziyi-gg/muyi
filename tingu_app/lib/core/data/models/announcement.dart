@@ -1,6 +1,7 @@
 
 import 'stock_quote.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 class Announcement {
   final AnnouncementType type;

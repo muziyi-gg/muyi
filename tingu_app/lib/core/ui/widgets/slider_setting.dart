@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
+
 
 /// 阈值滑块设置组件
 class SliderSetting extends StatelessWidget {
