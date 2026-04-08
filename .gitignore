@@ -1,0 +1,38 @@
+# Flutter & Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+*.jks
+*.keystore
+local.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/build/
+
+# Build artifacts
+build/
+*.apk
+*.aab
+*.ipa
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log

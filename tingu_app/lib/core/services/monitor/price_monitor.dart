@@ -20,7 +20,7 @@ class PriceMonitor {
       if (prev != null) {
         _checkAlerts(prev, quote);
       }
-      _prevQuotes[quote.code] = _quotes[quote.code];
+      _prevQuotes[quote.code] = _quotes[quote.code]!;
       _quotes[quote.code] = quote;
     }
   }

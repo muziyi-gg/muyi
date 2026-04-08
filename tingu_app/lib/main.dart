@@ -50,7 +50,11 @@ Future<void> main() async {
   ));
 
   // 初始化 Hive
+<<<<<<< HEAD:tingu_app/lib/main.dart
   await Hive.initFlutter();
+=======
+  Hive.initFlutter();
+>>>>>>> ac86b8a (fix: 修复 Hive 初始化、NDK 版本、import 路径及剩余编译错误):lib/main.dart
 
   // 初始化存储
   final hiveStorage = HiveStorage();
@@ -118,7 +122,7 @@ class TingUApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
