@@ -19,9 +19,6 @@ jobs:
         working-directory: ./tingu_app
       - run: flutter build apk --debug
         working-directory: ./tingu_app
-        env:
-          ANDROID_HOME: /opt/android-sdk
-          ANDROID_SDK_ROOT: /opt/android-sdk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
