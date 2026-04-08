@@ -50,7 +50,7 @@ Future<void> main() async {
   ));
 
   // 初始化 Hive
-  await Hive.init('/data/flutter_workspace/hive');
+  Hive.init('/data/flutter_workspace/hive');
 
   // 初始化存储
   final hiveStorage = HiveStorage();

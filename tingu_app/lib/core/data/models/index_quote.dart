@@ -1,4 +1,5 @@
 /// 指数行情数据模型
+import '../../core/constants/announcement_types.dart';
 class IndexQuote {
   final String code;
   final String name;

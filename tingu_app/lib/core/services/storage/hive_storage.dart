@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:hive_ce/hive.dart';
-import '../../constants/announcement_types.dart';
+import '../../core/constants/announcement_types.dart';
+
 
 class HiveStorage {
   static const String _alertCacheBox = 'alert_cache';

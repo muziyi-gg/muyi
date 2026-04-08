@@ -10,6 +10,7 @@ import 'sector_monitor.dart';
 import 'index_monitor.dart';
 import 'auction_monitor.dart';
 import 'volume_monitor.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 市场监控总入口
 /// 协调各子监控器，统一向调度器发送播报事件

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../main.dart';
-import '../constants/announcement_types.dart';
+import '../../core/constants/announcement_types.dart';
+
 
 /// 监控设置页
 class SettingsPage extends ConsumerStatefulWidget {

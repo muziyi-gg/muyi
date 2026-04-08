@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/announcement.dart';
 import '../../../main.dart';
-import '../../constants/announcement_types.dart';
+import '../../core/constants/announcement_types.dart';
+
 
 /// 今日播报记录 Provider
 final todayAlertsProvider = StateNotifierProvider<TodayAlertsNotifier, List<Announcement>>((ref) {

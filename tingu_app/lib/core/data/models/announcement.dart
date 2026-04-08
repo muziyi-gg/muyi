@@ -1,4 +1,4 @@
-import '../../constants/announcement_types.dart';
+
 import 'stock_quote.dart';
 import '../../core/constants/announcement_types.dart';
 

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/stock_quote.dart';
 import '../../data/models/user_stock_config.dart';
 import '../../../main.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 自选股列表 Provider
 final watchlistProvider = StateNotifierProvider<WatchlistNotifier, List<UserStockConfig>>((ref) {

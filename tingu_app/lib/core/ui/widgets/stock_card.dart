@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/stock_quote.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 股票卡片组件
 class StockCard extends StatelessWidget {

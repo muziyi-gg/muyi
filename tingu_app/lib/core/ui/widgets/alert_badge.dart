@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../constants/announcement_types.dart';
+import '../../core/constants/announcement_types.dart';
+
 
 /// 预警类型气泡标签
 class AlertBadge extends StatelessWidget {

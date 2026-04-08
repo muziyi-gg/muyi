@@ -4,11 +4,12 @@ import '../../data/models/stock_quote.dart';
 import '../../data/models/announcement.dart';
 import '../../data/models/user_stock_config.dart';
 import '../../../main.dart';
-import '../constants/announcement_types.dart';
+
 import '../widgets/stock_card.dart';
 import '../widgets/alert_badge.dart';
 import 'settings_page.dart';
 import 'watchlist_page.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 首页 Dashboard
 class HomePage extends ConsumerStatefulWidget {

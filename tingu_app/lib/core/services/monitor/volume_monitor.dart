@@ -1,7 +1,8 @@
 import '../../data/models/announcement.dart';
 import '../../data/models/stock_quote.dart';
-import '../../constants/announcement_types.dart';
+
 import '../../constants/market_constants.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 成交量异常监控器
 class VolumeMonitor {

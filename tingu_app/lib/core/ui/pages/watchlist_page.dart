@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../main.dart';
 import '../../data/models/user_stock_config.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 自选股管理页
 class WatchlistPage extends ConsumerStatefulWidget {

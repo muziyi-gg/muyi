@@ -2,8 +2,9 @@ import 'dart:async';
 import '../../data/models/announcement.dart';
 import '../../data/models/stock_quote.dart';
 import '../../data/models/user_stock_config.dart';
-import '../../constants/announcement_types.dart';
+
 import '../../constants/market_constants.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 价格监控器：检测涨停、跌停、炸板、拉升、下跌
 class PriceMonitor {
