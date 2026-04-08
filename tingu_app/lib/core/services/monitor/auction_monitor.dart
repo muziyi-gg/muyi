@@ -1,6 +1,6 @@
 import '../../data/models/announcement.dart';
 import '../../data/models/stock_quote.dart';
-import '../../../constants/announcement_types.dart';
+import '../../constants/announcement_types.dart';
 
 /// 集合竞价监控器：检测 9:15-9:25 竞价异动
 class AuctionMonitor {
