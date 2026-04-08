@@ -19,4 +19,32 @@ enum AnnouncementType {
   final String code;
 
   const AnnouncementType(this.label, this.code);
+
+  /// 获取该类型对应的优先级
+  Priority get priority {
+    switch (this) {
+      case AnnouncementType.limitUp:
+      case AnnouncementType.limitDown:
+        return Priority.p0;
+      case AnnouncementType.burstBoard:
+        return Priority.p1;
+      case AnnouncementType.quickRise:
+      case AnnouncementType.quickFall:
+      case AnnouncementType.sectorAlert:
+      case AnnouncementType.auctionAlert:
+        return Priority.p2;
+      case AnnouncementType.marketAlert:
+      case AnnouncementType.volumeAlert:
+      case AnnouncementType.stockQuote:
+      case AnnouncementType.profitLoss:
+        return Priority.p3;
+    }
+  }
+}
+
+enum Priority {
+  p0,
+  p1,
+  p2,
+  p3,
 }

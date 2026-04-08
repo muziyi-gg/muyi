@@ -50,7 +50,7 @@ Future<void> main() async {
   ));
 
   // 初始化 Hive
-  await Hive.init();
+  await Hive.init('/data/flutter_workspace/hive');
 
   // 初始化存储
   final hiveStorage = HiveStorage();
@@ -118,7 +118,7 @@ class TingUApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: const CardTheme(
+        cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

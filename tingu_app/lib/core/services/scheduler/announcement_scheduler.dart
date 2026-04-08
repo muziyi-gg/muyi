@@ -4,6 +4,7 @@ import '../../data/models/stock_quote.dart';
 import '../../constants/announcement_types.dart';
 import 'deduplication_service.dart';
 import 'interruption_manager.dart';
+import '../../core/constants/announcement_types.dart';
 
 /// 调度器状态
 enum SchedulerState { idle, playing, queued }
