@@ -1,0 +1,40 @@
+name: tingu_app
+description: 听股通 - 股票行情语音播报应用
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # 状态管理
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+  
+  # 本地存储
+  hive_ce: ^2.6.0
+  hive_ce_flutter: ^2.1.0
+  
+  # 网络
+  http: ^1.2.0
+  web_socket_channel: ^2.4.0
+  
+  # TTS
+  flutter_tts: ^3.8.5
+  
+  # UI
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  hive_ce_generator: ^1.6.0
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+
+flutter:
+  uses-material-design: true
