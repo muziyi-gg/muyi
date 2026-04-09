@@ -122,57 +122,81 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
   Future<void> _initApp() async {
     try {
       debugPrint('[DEBUG] _initApp started');
-      if (!mounted) return;
+      if (!mounted) { debugPrint('[DEBUG] Step 0: NOT mounted, returning early'); return; }
+
       // Step 1: Hive 初始化
+      debugPrint('[DEBUG] Step 1: updating state -> 正在初始化本地存储...');
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化本地存储...');
-      debugPrint('[DEBUG] Hive.initFlutter() starting...');
+      debugPrint('[DEBUG] Step 1: Hive.initFlutter() starting...');
       try {
         await Hive.initFlutter();
+        debugPrint('[DEBUG] Step 1: Hive.initFlutter() SUCCESS');
       } catch(e) {
-        debugPrint('Hive.initFlutter() failed: $e — continuing anyway');
+        debugPrint('[DEBUG] Step 1: Hive.initFlutter() FAILED: $e — continuing anyway');
       }
 
       // Step 2: 打开存储 Box
+      debugPrint('[DEBUG] Step 2: updating state -> 正在打开数据存储...');
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在打开数据存储...');
+      debugPrint('[DEBUG] Step 2: HiveStorage() constructing...');
       final hiveStorage = HiveStorage();
+      debugPrint('[DEBUG] Step 2: hiveStorage.init() starting...');
       await hiveStorage.init();
+      debugPrint('[DEBUG] Step 2: hiveStorage.init() DONE');
 
       // Step 3: 数据源 & 仓库
+      debugPrint('[DEBUG] Step 3: updating state -> 正在连接数据服务...');
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在连接数据服务...');
+      debugPrint('[DEBUG] Step 3: EastMoneyDataSource() constructing...');
       final dataSource = EastMoneyDataSource();
       final repository = StockRepositoryImpl(dataSource);
+      debugPrint('[DEBUG] Step 3: repository constructed');
 
       // Step 4: 服务初始化
+      debugPrint('[DEBUG] Step 4: updating state -> 正在初始化播报服务...');
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化播报服务...');
+      debugPrint('[DEBUG] Step 4: creating DeduplicationService...');
       final dedupService = DeduplicationService(hiveStorage);
+      debugPrint('[DEBUG] Step 4: creating InterruptionManager...');
       final interruptMgr = InterruptionManager();
+      debugPrint('[DEBUG] Step 4: creating AnnouncementScheduler...');
       final scheduler = AnnouncementScheduler(dedupService, interruptMgr);
+      debugPrint('[DEBUG] Step 4: scheduler constructed');
 
-      // Step 5: TTS 初始化（内部已 try-catch，失败不影响主流程）
+      // Step 5: TTS 初始化
+      debugPrint('[DEBUG] Step 5: updating state -> 正在初始化语音引擎...');
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化语音引擎...');
+      debugPrint('[DEBUG] Step 5: SystemTtsImpl() constructing...');
       final ttsService = SystemTtsImpl();
+      debugPrint('[DEBUG] Step 5: ttsService.init() starting...');
       await ttsService.init();
+      debugPrint('[DEBUG] Step 5: ttsService.init() DONE');
 
-      // Step 6: 市场监控（独立 try-catch，失败不阻塞主流程）
+      // Step 6: 市场监控
+      debugPrint('[DEBUG] Step 6: updating state -> 正在启动行情监控...');
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在启动行情监控...');
+      debugPrint('[DEBUG] Step 6: MarketMonitor() constructing...');
       final marketMonitor = MarketMonitor(dataSource, scheduler, hiveStorage);
 
       // 注册播报监听（独立 try-catch）
+      debugPrint('[DEBUG] Step 7: registering announcement stream listener...');
       try {
         _announcementSub = scheduler.announcementStream.listen((announcement) {
           ttsService.speak(announcement.content);
         });
+        debugPrint('[DEBUG] Step 7: stream listener registered OK');
       } catch (e) {
-        debugPrint('scheduler stream listen failed: $e');
+        debugPrint('[DEBUG] Step 7: stream listen FAILED: $e');
       }
 
-      // 组装服务对象（确保 appServicesProvider 一定有值）
+      // 组装服务对象
+      debugPrint('[DEBUG] Step 8: assembling AppServices...');
       final services = AppServices(
         hiveStorage: hiveStorage,
         dataSource: dataSource,
@@ -183,32 +207,42 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
         ttsService: ttsService,
         marketMonitor: marketMonitor,
       );
+      debugPrint('[DEBUG] Step 8: AppServices assembled');
 
-      // 市场监控启动加超时保护
+      // 市场监控启动
+      debugPrint('[DEBUG] Step 9: marketMonitor.start() starting...');
       try {
         await marketMonitor.start().timeout(
           const Duration(seconds: 10),
-          onTimeout: () => debugPrint('marketMonitor.start() timeout (10s)'),
+          onTimeout: () => debugPrint('[DEBUG] Step 9: marketMonitor.start() TIMEOUT (10s)'),
         );
+        debugPrint('[DEBUG] Step 9: marketMonitor.start() DONE');
       } catch (e) {
-        debugPrint('marketMonitor.start() failed: $e — continuing anyway');
+        debugPrint('[DEBUG] Step 9: marketMonitor.start() FAILED: $e — continuing anyway');
       }
 
-      // 注册 Provider（在任何情况下都赋值，确保 HomePage 不会遇到 uninitialized value）
-      debugPrint('[DEBUG] Setting appServicesProvider NOW');
+      // 注册 Provider
+      debugPrint('[DEBUG] Step 10: setting appServicesProvider NOW');
+      if (!mounted) { debugPrint('[DEBUG] Step 10: NOT mounted, skipping provider set'); return; }
       ref.read(appServicesProvider.notifier).state = services;
-      if (!mounted) return;
+      debugPrint('[DEBUG] Step 10: appServicesProvider SET');
       ref.read(startupStateProvider.notifier).state = StartupState.done();
+      debugPrint('[DEBUG] Step 10: startupStateProvider = done');
 
       // 切换到主页
+      debugPrint('[DEBUG] Step 11: pushing HomePage...');
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomePage()),
         );
+        debugPrint('[DEBUG] Step 11: Navigator.pushReplacement CALLED');
+      } else {
+        debugPrint('[DEBUG] Step 11: NOT mounted, skipping navigation');
       }
     } catch (e, st) {
       // 捕获所有初始化错误，显示错误界面
-      debugPrint('初始化失败: $e\n$st');
+      debugPrint('[DEBUG] CRASH: $e\n$st');
+      if (!mounted) return;
       ref.read(startupStateProvider.notifier).state =
           StartupState.error('${e.runtimeType}: $e');
     }
