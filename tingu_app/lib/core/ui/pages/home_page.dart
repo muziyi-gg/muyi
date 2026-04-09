@@ -43,7 +43,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void _initStreams() {
     try {
       debugPrint('[DEBUG] HomePage initStreams, checking provider...');
-      final services = ref.read(appServicesProvider);
+      final services = ref.read(appServicesProvider)!;
       _announcementSub = services.scheduler.announcementStream.listen(
         (announcement) {
           if (!mounted) return;
@@ -288,7 +288,7 @@ class _HomePageState extends ConsumerState<HomePage>
     });
 
     try {
-      final services = ref.read(appServicesProvider);
+      final services = ref.read(appServicesProvider)!;
       if (_isMonitoring) {
         services.marketMonitor.start();
       } else {

@@ -23,7 +23,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
   }
 
   void _loadStocks() {
-    final services = ref.read(appServicesProvider);
+    final services = ref.read(appServicesProvider)!;
     setState(() {
       _stocks = services.hiveStorage.getUserStocks();
     });
@@ -150,13 +150,13 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
       addedAt: DateTime.now(),
       alertConfig: StockAlertConfig(),
     );
-    final services = ref.read(appServicesProvider);
+    final services = ref.read(appServicesProvider)!;
     await services.marketMonitor.addUserStock(config);
     _loadStocks();
   }
 
   Future<void> _deleteStock(String code) async {
-    final services = ref.read(appServicesProvider);
+    final services = ref.read(appServicesProvider)!;
     await services.marketMonitor.removeUserStock(code);
     _loadStocks();
   }

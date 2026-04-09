@@ -19,7 +19,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    final services = ref.read(appServicesProvider);
+    final services = ref.read(appServicesProvider)!;
     _alertConfig = Map.from(services.hiveStorage.getAlertConfig());
   }
 
@@ -159,7 +159,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _saveConfig() async {
-    final services = ref.read(appServicesProvider);
+    final services = ref.read(appServicesProvider)!;
     await services.hiveStorage.saveAlertConfig(_alertConfig);
 
     if (mounted) {
