@@ -142,19 +142,11 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       final interruptMgr = InterruptionManager();
       final scheduler = AnnouncementScheduler(dedupService, interruptMgr);
 
-      // Step 5: TTS 初始化（非阻塞，失败不影响主流程）
+      // Step 5: TTS 初始化（内部已 try-catch，失败不影响主流程）
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化语音引擎...');
       final ttsService = SystemTtsImpl();
-      try {
-        // 设置超时，防止 init 卡死导致 App 无法启动
-        await ttsService.init().timeout(
-          const Duration(seconds: 5),
-          onTimeout: () => debugPrint('TTS init 超时，跳过'),
-        );
-      } catch (e) {
-        debugPrint('TTS init 失败（不影响继续启动）: $e');
-      }
+      await ttsService.init();
 
       // Step 6: 市场监控
       ref.read(startupStateProvider.notifier).state =
