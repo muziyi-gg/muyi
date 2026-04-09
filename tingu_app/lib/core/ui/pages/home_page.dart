@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/models/stock_quote.dart';
 import '../../data/models/announcement.dart';
 import '../../data/models/user_stock_config.dart';
 import '../../../main.dart';
@@ -11,7 +11,6 @@ import 'settings_page.dart';
 import 'watchlist_page.dart';
 import '../../constants/announcement_types.dart';
 
-
 /// 首页 Dashboard
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -20,10 +19,12 @@ class HomePage extends ConsumerStatefulWidget {
   ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends ConsumerState<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends ConsumerState<HomePage>
+    with TickerProviderStateMixin {
   List<Announcement> _todayAlerts = [];
   bool _isMonitoring = true;
   late AnimationController _pulseController;
+  StreamSubscription?? _announcementSub; // 可空，避免未初始化报错
 
   @override
   void initState() {
@@ -32,28 +33,41 @@ class _HomePageState extends ConsumerState<HomePage> with TickerProviderStateMix
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    // 在 initState 而不是 build 里注册监听器，只注册一次
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initStreams();
+    });
+  }
+
+  void _initStreams() {
+    try {
+      final services = ref.read(appServicesProvider);
+      _announcementSub = services.scheduler.announcementStream.listen(
+        (announcement) {
+          if (!mounted) return;
+          setState(() {
+            _todayAlerts.insert(0, announcement);
+            if (_todayAlerts.length > 100) {
+              _todayAlerts = _todayAlerts.sublist(0, 100);
+            }
+          });
+        },
+      );
+    } catch (e) {
+      debugPrint('HomePage initStreams failed: $e');
+    }
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _announcementSub?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final services = ref.watch(appServicesProvider);
-
-    // 监听新播报事件
-    services.scheduler.announcementStream.listen((announcement) {
-      setState(() {
-        _todayAlerts.insert(0, announcement);
-        if (_todayAlerts.length > 100) {
-          _todayAlerts = _todayAlerts.sublist(0, 100);
-        }
-      });
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('听股通'),
@@ -272,12 +286,16 @@ class _HomePageState extends ConsumerState<HomePage> with TickerProviderStateMix
       _isMonitoring = !_isMonitoring;
     });
 
-    final services = ref.read(appServicesProvider);
-    if (_isMonitoring) {
-      services.marketMonitor.start();
-    } else {
-      services.marketMonitor.stop();
-      services.ttsService.stop();
+    try {
+      final services = ref.read(appServicesProvider);
+      if (_isMonitoring) {
+        services.marketMonitor.start();
+      } else {
+        services.marketMonitor.stop();
+        services.ttsService.stop();
+      }
+    } catch (e) {
+      debugPrint('toggleMonitor failed: $e');
     }
   }
 }

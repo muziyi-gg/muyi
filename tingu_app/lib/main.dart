@@ -148,16 +148,21 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       final ttsService = SystemTtsImpl();
       await ttsService.init();
 
-      // Step 6: 市场监控
+      // Step 6: 市场监控（独立 try-catch，失败不阻塞主流程）
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在启动行情监控...');
       final marketMonitor = MarketMonitor(dataSource, scheduler, hiveStorage);
 
-      // 注册服务
-      scheduler.announcementStream.listen((announcement) {
-        ttsService.speak(announcement.content);
-      });
+      // 注册播报监听（独立 try-catch）
+      try {
+        scheduler.announcementStream.listen((announcement) {
+          ttsService.speak(announcement.content);
+        });
+      } catch (e) {
+        debugPrint('scheduler stream listen failed: $e');
+      }
 
+      // 组装服务对象（确保 appServicesProvider 一定有值）
       final services = AppServices(
         hiveStorage: hiveStorage,
         dataSource: dataSource,
@@ -169,9 +174,17 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
         marketMonitor: marketMonitor,
       );
 
-      await marketMonitor.start();
+      // 市场监控启动加超时保护
+      try {
+        await marketMonitor.start().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () => debugPrint('marketMonitor.start() timeout (10s)'),
+        );
+      } catch (e) {
+        debugPrint('marketMonitor.start() failed: $e — continuing anyway');
+      }
 
-      // 注册 Provider
+      // 注册 Provider（在任何情况下都赋值，确保 HomePage 不会遇到 uninitialized value）
       ref.read(appServicesProvider.notifier).state = services;
       ref.read(startupStateProvider.notifier).state = StartupState.done();
 
