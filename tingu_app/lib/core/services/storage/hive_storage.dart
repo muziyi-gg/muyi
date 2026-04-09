@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:hive_ce/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../constants/announcement_types.dart';
 
 

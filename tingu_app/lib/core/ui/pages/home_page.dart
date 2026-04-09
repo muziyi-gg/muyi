@@ -42,6 +42,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void _initStreams() {
     try {
+      debugPrint('[DEBUG] HomePage initStreams, checking provider...');
       final services = ref.read(appServicesProvider);
       _announcementSub = services.scheduler.announcementStream.listen(
         (announcement) {

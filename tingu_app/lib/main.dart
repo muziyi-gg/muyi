@@ -123,6 +123,7 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
 
   Future<void> _initApp() async {
     try {
+      debugPrint('[DEBUG] _initApp started');
       // Step 1: Hive 初始化
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化本地存储...');
@@ -190,6 +191,7 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       }
 
       // 注册 Provider（在任何情况下都赋值，确保 HomePage 不会遇到 uninitialized value）
+      debugPrint('[DEBUG] Setting appServicesProvider NOW');
       ref.read(appServicesProvider.notifier).state = services;
       ref.read(startupStateProvider.notifier).state = StartupState.done();
 
