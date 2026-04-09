@@ -37,9 +37,7 @@ class AppServices {
   });
 }
 
-final appServicesProvider = StateProvider<AppServices>((ref) {
-  throw UnimplementedError('AppServices not initialized');
-});
+final appServicesProvider = StateProvider<AppServices?>((ref) => null);
 
 // ==================== 启动状态 ====================
 enum StartupStatus { idle, loading, done, error }
@@ -124,6 +122,7 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
   Future<void> _initApp() async {
     try {
       debugPrint('[DEBUG] _initApp started');
+      if (!mounted) return;
       // Step 1: Hive 初始化
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化本地存储...');
@@ -198,6 +197,7 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       // 注册 Provider（在任何情况下都赋值，确保 HomePage 不会遇到 uninitialized value）
       debugPrint('[DEBUG] Setting appServicesProvider NOW');
       ref.read(appServicesProvider.notifier).state = services;
+      if (!mounted) return;
       ref.read(startupStateProvider.notifier).state = StartupState.done();
 
       // 切换到主页
