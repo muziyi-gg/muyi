@@ -127,7 +127,12 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       // Step 1: Hive 初始化
       ref.read(startupStateProvider.notifier).state =
           StartupState.loading('正在初始化本地存储...');
-      await Hive.initFlutter();
+      debugPrint('[DEBUG] Hive.initFlutter() starting...');
+      try {
+        await Hive.initFlutter();
+      } catch(e) {
+        debugPrint('Hive.initFlutter() failed: $e — continuing anyway');
+      }
 
       // Step 2: 打开存储 Box
       ref.read(startupStateProvider.notifier).state =
