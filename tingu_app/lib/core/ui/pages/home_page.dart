@@ -24,7 +24,7 @@ class _HomePageState extends ConsumerState<HomePage>
   List<Announcement> _todayAlerts = [];
   bool _isMonitoring = true;
   late AnimationController _pulseController;
-  StreamSubscription?? _announcementSub; // 可空，避免未初始化报错
+  StreamSubscription? _announcementSub;
 
   @override
   void initState() {
