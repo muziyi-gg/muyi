@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -10,6 +11,7 @@ import 'core/services/scheduler/interruption_manager.dart';
 import 'core/services/scheduler/announcement_scheduler.dart';
 import 'core/services/tts/tts_service.dart';
 import 'core/services/monitor/market_monitor.dart';
+import 'core/data/models/announcement.dart';
 import 'core/ui/pages/home_page.dart';
 
 // ==================== 全局服务容器 ====================
@@ -109,6 +111,9 @@ class _StartupScreen extends ConsumerStatefulWidget {
 }
 
 class _StartupScreenState extends ConsumerState<_StartupScreen> {
+  bool _navigated = false;
+  StreamSubscription<Announcement>? _announcementSub;
+
   @override
   void initState() {
     super.initState();
@@ -155,7 +160,7 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
 
       // 注册播报监听（独立 try-catch）
       try {
-        scheduler.announcementStream.listen((announcement) {
+        _announcementSub = scheduler.announcementStream.listen((announcement) {
           ttsService.speak(announcement.content);
         });
       } catch (e) {
@@ -260,6 +265,16 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       );
     }
 
+    if (state.status == StartupStatus.done) {
+      if (!_navigated) {
+        _navigated = true;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      }
+      return const SizedBox.shrink();
+    }
+
     // 启动画面
     return Scaffold(
       backgroundColor: const Color(0xFFE53935),
@@ -304,5 +319,11 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _announcementSub?.cancel();
+    super.dispose();
   }
 }
