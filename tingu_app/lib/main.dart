@@ -112,7 +112,8 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
   @override
   void initState() {
     super.initState();
-    _initApp();
+    // microtask defer: 确保 UI 先构建完成，再修改 provider
+    Future.microtask(() => _initApp());
   }
 
   Future<void> _initApp() async {
