@@ -25,6 +25,7 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _isMonitoring = true;
   late AnimationController _pulseController;
   StreamSubscription? _announcementSub;
+  bool _settingsNavInProgress = false;
 
   @override
   void initState() {
@@ -34,7 +35,6 @@ class _HomePageState extends ConsumerState<HomePage>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
-    // 在 initState 而不是 build 里注册监听器，只注册一次
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initStreams();
     });
@@ -42,8 +42,11 @@ class _HomePageState extends ConsumerState<HomePage>
 
   void _initStreams() {
     try {
-      debugPrint('[DEBUG] HomePage initStreams, checking provider...');
-      final services = ref.read(appServicesProvider)!;
+      final services = ref.read(appServicesProvider);
+      if (services == null) {
+        debugPrint('[HomePage] _initStreams: appServicesProvider is null, skipping');
+        return;
+      }
       _announcementSub = services.scheduler.announcementStream.listen(
         (announcement) {
           if (!mounted) return;
@@ -56,7 +59,7 @@ class _HomePageState extends ConsumerState<HomePage>
         },
       );
     } catch (e) {
-      debugPrint('HomePage initStreams failed: $e');
+      debugPrint('HomePage _initStreams failed: $e');
     }
   }
 
@@ -68,25 +71,44 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Future<void> _openSettings() async {
-    debugPrint('[HomePage] _openSettings called');
+    // Prevent concurrent navigation calls
+    if (_settingsNavInProgress) {
+      debugPrint('[HomePage] _openSettings: already in progress, ignoring');
+      return;
+    }
+    _settingsNavInProgress = true;
+
     try {
-      // Use addPostFrameCallback to ensure context is fully attached to the widget tree
-      // before attempting navigation. This fixes the silent-no-op issue on button press.
+      debugPrint('[HomePage] _openSettings started');
+
+      // Defer to end-of-frame so we are inside Flutter's draw phase when the
+      // widget tree is complete and context is fully attached.  addPostFrameCallback
+      // is scheduled inside endOfFrame, so if the widget had begun disposing the
+      // callback is never invoked — eliminating the race between mounted checks
+      // and Navigator.of().
       await SchedulerBinding.instance.endOfFrame;
-      if (!mounted) return;
-      final navigator = Navigator.of(context);
-      debugPrint('[HomePage] Navigator.of(context) succeeded: $navigator');
-      if (navigator == null) {
-        debugPrint('[HomePage] Navigator is null — using root navigator');
-        await Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute(builder: (_) => const SettingsPage()),
-        );
-      } else {
-        await navigator.push(
-          MaterialPageRoute(builder: (_) => const SettingsPage()),
-        );
-      }
-      debugPrint('[HomePage] Navigator.push completed');
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        try {
+          // Navigator.of called inside the callback — context is guaranteed valid here
+          final nav = Navigator.of(context, rootNavigator: true);
+          debugPrint('[HomePage] Navigator obtained: $nav');
+          await nav.push<void>(
+            MaterialPageRoute(builder: (_) => const SettingsPage()),
+          );
+          debugPrint('[HomePage] Navigator.push completed');
+        } catch (e, st) {
+          debugPrint('[HomePage] inner nav callback FAILED: $e\n$st');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('无法打开设置页: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
+      });
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
       if (mounted) {
@@ -98,6 +120,8 @@ class _HomePageState extends ConsumerState<HomePage>
           ),
         );
       }
+    } finally {
+      _settingsNavInProgress = false;
     }
   }
 
@@ -110,12 +134,7 @@ class _HomePageState extends ConsumerState<HomePage>
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: '设置',
-            onPressed: () {
-              // 显式 async+await 确保所有异常被捕获，防止"无反应"
-              _openSettings().catchError((e) {
-                debugPrint('[HomePage] _openSettings unhandled rejection: $e');
-              });
-            },
+            onPressed: _openSettings,
           ),
         ],
       ),
@@ -325,7 +344,8 @@ class _HomePageState extends ConsumerState<HomePage>
     });
 
     try {
-      final services = ref.read(appServicesProvider)!;
+      final services = ref.read(appServicesProvider);
+      if (services == null) return;
       if (_isMonitoring) {
         services.marketMonitor.start();
       } else {
