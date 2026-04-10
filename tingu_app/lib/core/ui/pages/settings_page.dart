@@ -19,8 +19,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    final services = ref.read(appServicesProvider)!;
-    _alertConfig = Map.from(services.hiveStorage.getAlertConfig());
+    _initConfig();
+  }
+
+  Future<void> _initConfig() async {
+    // 等待 services 初始化完成，最多等3秒
+    for (int i = 0; i < 30; i++) {
+      try {
+        final services = ref.read(appServicesProvider);
+        if (services != null) {
+          setState(() {
+            _alertConfig = Map.from(services.hiveStorage.getAlertConfig());
+          });
+          return;
+        }
+      } catch (_) {}
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+    // 超时则用默认值
+    if (mounted) {
+      setState(() {
+        _alertConfig = {};
+        for (final type in AnnouncementType.values) {
+          _alertConfig[type.name] = true;
+        }
+      });
+    }
   }
 
   @override
@@ -159,8 +183,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _saveConfig() async {
-    final services = ref.read(appServicesProvider)!;
-    await services.hiveStorage.saveAlertConfig(_alertConfig);
+    try {
+      final services = ref.read(appServicesProvider);
+      if (services == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('服务未就绪，请稍后重试')),
+          );
+        }
+        return;
+      }
+      await services.hiveStorage.saveAlertConfig(_alertConfig);
+    } catch (e) {
+      debugPrint('saveConfig failed: $e');
+    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
