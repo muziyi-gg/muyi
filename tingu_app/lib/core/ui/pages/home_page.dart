@@ -67,6 +67,23 @@ class _HomePageState extends ConsumerState<HomePage>
     super.dispose();
   }
 
+  void _openSettings() {
+    debugPrint('[HomePage] _openSettings called, context.mounted=${context.mounted}');
+    try {
+      final navigator = Navigator.of(context);
+      debugPrint('[HomePage] Navigator.of(context) succeeded');
+      navigator.push(
+        MaterialPageRoute(builder: (_) => const SettingsPage()),
+      ).then((result) {
+        debugPrint('[HomePage] Navigator.push completed, result=$result');
+      }).catchError((e) {
+        debugPrint('[HomePage] Navigator.push ERROR: $e');
+      });
+    } catch (e, st) {
+      debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,13 +92,8 @@ class _HomePageState extends ConsumerState<HomePage>
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              debugPrint('[HomePage] Settings button pressed');
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsPage()),
-              ).then((result) => debugPrint('[HomePage] Navigator.push completed: $result'));
-            },
+            tooltip: '设置',
+            onPressed: _openSettings,
           ),
         ],
       ),

@@ -46,7 +46,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[SettingsPage] build() called, _configLoaded=$_configLoaded');
+    debugPrint('[SettingsPage] build() called, _configLoaded=${_configLoaded}');
+    try {
+      return _buildContent();
+    } catch (e, st) {
+      debugPrint('[SettingsPage] build() CRASHED: $e\n$st');
+      return Scaffold(
+        appBar: AppBar(title: const Text('监控设置')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('页面加载失败: $e'),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('监控设置'),
