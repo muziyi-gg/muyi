@@ -99,7 +99,12 @@ class _HomePageState extends ConsumerState<HomePage>
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: '设置',
-            onPressed: _openSettings,
+            onPressed: () {
+              // 显式 async+await 确保所有异常被捕获，防止"无反应"
+              _openSettings().catchError((e) {
+                debugPrint('[HomePage] _openSettings unhandled rejection: $e');
+              });
+            },
           ),
         ],
       ),
