@@ -28,46 +28,33 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _initConfig() async {
     // 等待 services 初始化完成，最多等3秒
     for (int i = 0; i < 30; i++) {
+      // mounted 已被 ConsumerState 混入提供
+      if (!mounted) return;
       try {
         final services = ref.read(appServicesProvider);
         if (services != null && !_configLoaded) {
+          final loadedConfig = Map<String, bool>.from(services.hiveStorage.getAlertConfig());
+          if (!mounted) return;
           setState(() {
-            _alertConfig = Map.from(services.hiveStorage.getAlertConfig());
+            _alertConfig = loadedConfig;
             _configLoaded = true;
           });
           return;
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[SettingsPage] _initConfig attempt $i failed: $e');
+      }
       await Future.delayed(const Duration(milliseconds: 100));
     }
     // 超时则标记已加载（默认值保持不变）
-    _configLoaded = true;
+    if (mounted) {
+      setState(() { _configLoaded = true; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[SettingsPage] build() called, _configLoaded=${_configLoaded}');
-    try {
-      return _buildContent();
-    } catch (e, st) {
-      debugPrint('[SettingsPage] build() CRASHED: $e\n$st');
-      return Scaffold(
-        appBar: AppBar(title: const Text('监控设置')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('页面加载失败: $e'),
-            ],
-          ),
-        ),
-      );
-    }
-  }
-
-  Widget _buildContent() {
+    debugPrint('[SettingsPage] build() called, _configLoaded=$_configLoaded');
     return Scaffold(
       appBar: AppBar(
         title: const Text('监控设置'),
@@ -81,18 +68,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 数据源信息
           _buildDataSourceCard(),
           const SizedBox(height: 16),
-
-          // 播报开关
-          const Text(
-            '播报类型开关',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          const Text('播报类型开关', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           _buildAlertSwitches(),
         ],
