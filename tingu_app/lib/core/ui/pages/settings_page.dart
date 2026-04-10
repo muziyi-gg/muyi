@@ -4,7 +4,6 @@ import '../../../main.dart';
 import '../../constants/announcement_types.dart';
 
 
-
 /// 监控设置页
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -14,7 +13,11 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  late Map<String, bool> _alertConfig;
+  /// 立即初始化默认值，确保 build() 首次执行时 map 已就绪
+  Map<String, bool> _alertConfig = {
+    for (final type in AnnouncementType.values) type.name: true,
+  };
+  bool _configLoaded = false;
 
   @override
   void initState() {
@@ -27,24 +30,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     for (int i = 0; i < 30; i++) {
       try {
         final services = ref.read(appServicesProvider);
-        if (services != null) {
+        if (services != null && !_configLoaded) {
           setState(() {
             _alertConfig = Map.from(services.hiveStorage.getAlertConfig());
+            _configLoaded = true;
           });
           return;
         }
       } catch (_) {}
       await Future.delayed(const Duration(milliseconds: 100));
     }
-    // 超时则用默认值
-    if (mounted) {
-      setState(() {
-        _alertConfig = {};
-        for (final type in AnnouncementType.values) {
-          _alertConfig[type.name] = true;
-        }
-      });
-    }
+    // 超时则标记已加载（默认值保持不变）
+    _configLoaded = true;
   }
 
   @override
