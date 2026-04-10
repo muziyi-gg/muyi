@@ -73,36 +73,35 @@ class _HomePageState extends ConsumerState<HomePage>
   Future<void> _openSettings() async {
     if (_settingsNavInProgress) return;
     _settingsNavInProgress = true;
-    debugPrint('[HomePage] _openSettings started');
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        if (!mounted) {
-          debugPrint('[HomePage] _openSettings: widget unmounted, skipping');
-          return;
-        }
-        debugPrint('[HomePage] addPostFrameCallback firing, context ready');
-        final nav = Navigator.of(context);
-        debugPrint('[HomePage] Navigator obtained: $nav');
-        await nav.push<void>(
-          MaterialPageRoute(builder: (_) => const SettingsPage()),
-        );
-        debugPrint('[HomePage] Navigator.push completed OK');
-      } catch (e, st) {
-        debugPrint('[HomePage] Navigator.push FAILED: $e\n$st');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('无法打开设置页: $e'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        }
-      } finally {
-        _settingsNavInProgress = false;
+    debugPrint('[HomePage] _openSettings called');
+    try {
+      if (!mounted) {
+        debugPrint('[HomePage] _openSettings: widget unmounted, aborting');
+        return;
       }
-    });
+      final nav = Navigator.of(context);
+      if (!mounted) {
+        debugPrint('[HomePage] _openSettings: unmounted after Navigator.of, aborting');
+        return;
+      }
+      await nav.push<void>(
+        MaterialPageRoute(builder: (_) => const SettingsPage()),
+      );
+      debugPrint('[HomePage] Navigator.push completed OK');
+    } catch (e, st) {
+      debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('无法打开设置页: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      _settingsNavInProgress = false;
+    }
   }
 
   @override
