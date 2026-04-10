@@ -70,11 +70,22 @@ class _HomePageState extends ConsumerState<HomePage>
   Future<void> _openSettings() async {
     debugPrint('[HomePage] _openSettings called');
     try {
+      // Use addPostFrameCallback to ensure context is fully attached to the widget tree
+      // before attempting navigation. This fixes the silent-no-op issue on button press.
+      await SchedulerBinding.instance.endOfFrame;
+      if (!mounted) return;
       final navigator = Navigator.of(context);
-      debugPrint('[HomePage] Navigator.of(context) succeeded');
-      await navigator.push(
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
+      debugPrint('[HomePage] Navigator.of(context) succeeded: $navigator');
+      if (navigator == null) {
+        debugPrint('[HomePage] Navigator is null — using root navigator');
+        await Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(builder: (_) => const SettingsPage()),
+        );
+      } else {
+        await navigator.push(
+          MaterialPageRoute(builder: (_) => const SettingsPage()),
+        );
+      }
       debugPrint('[HomePage] Navigator.push completed');
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
@@ -99,7 +110,12 @@ class _HomePageState extends ConsumerState<HomePage>
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: '设置',
-            onPressed: _openSettings,
+            onPressed: () {
+              // 显式 async+await 确保所有异常被捕获，防止"无反应"
+              _openSettings().catchError((e) {
+                debugPrint('[HomePage] _openSettings unhandled rejection: $e');
+              });
+            },
           ),
         ],
       ),
