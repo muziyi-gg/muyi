@@ -167,15 +167,22 @@ class _StartupScreenState extends ConsumerState<_StartupScreen> {
       final scheduler = AnnouncementScheduler(dedupService, interruptMgr);
       debugPrint('[DEBUG] Step 4: scheduler constructed');
 
-      // Step 5: TTS 初始化
-      debugPrint('[DEBUG] Step 5: updating state -> 正在初始化语音引擎...');
+      // Step 5: TTS 初始化（永不阻塞主流程）
+      debugPrint('[DEBUG] Step 5: updating state -> 正在初始化语音引擎（Step 5/9）...');
       ref.read(startupStateProvider.notifier).state =
-          StartupState.loading('正在初始化语音引擎...');
+          StartupState.loading('正在初始化语音引擎（Step 5/9）...');
       debugPrint('[DEBUG] Step 5: SystemTtsImpl() constructing...');
       final ttsService = SystemTtsImpl();
       debugPrint('[DEBUG] Step 5: ttsService.init() starting...');
-      await ttsService.init();
-      debugPrint('[DEBUG] Step 5: ttsService.init() DONE');
+      try {
+        await ttsService.init().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => debugPrint('[DEBUG] Step 5: ttsService.init() TIMEOUT — skipping'),
+        );
+        debugPrint('[DEBUG] Step 5: ttsService.init() DONE');
+      } catch (e) {
+        debugPrint('[DEBUG] Step 5: TTS init failed: $e — skipping (TTS disabled)');
+      }
 
       // Step 6: 市场监控
       debugPrint('[DEBUG] Step 6: updating state -> 正在启动行情监控...');
