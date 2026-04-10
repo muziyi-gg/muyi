@@ -46,6 +46,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[SettingsPage] build() called, _configLoaded=$_configLoaded');
     return Scaffold(
       appBar: AppBar(
         title: const Text('监控设置'),

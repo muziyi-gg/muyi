@@ -75,10 +75,13 @@ class _HomePageState extends ConsumerState<HomePage>
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsPage()),
-            ),
+            onPressed: () {
+              debugPrint('[HomePage] Settings button pressed');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsPage()),
+              ).then((result) => debugPrint('[HomePage] Navigator.push completed: $result'));
+            },
           ),
         ],
       ),
