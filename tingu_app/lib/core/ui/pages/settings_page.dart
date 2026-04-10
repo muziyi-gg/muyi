@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../main.dart';
 import '../../constants/announcement_types.dart';
 
-
 /// 监控设置页
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -18,6 +17,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     for (final type in AnnouncementType.values) type.name: true,
   };
   bool _configLoaded = false;
+  bool _initError = false;
+  String? _initErrorMsg;
 
   @override
   void initState() {
@@ -26,29 +27,56 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _initConfig() async {
-    // 等待 services 初始化完成，最多等3秒
+    debugPrint('[SettingsPage] _initConfig starting...');
+
     for (int i = 0; i < 30; i++) {
-      // mounted 已被 ConsumerState 混入提供
-      if (!mounted) return;
+      if (!mounted) {
+        debugPrint('[SettingsPage] _initConfig: not mounted, exiting');
+        return;
+      }
+
       try {
         final services = ref.read(appServicesProvider);
-        if (services != null && !_configLoaded) {
-          final loadedConfig = Map<String, bool>.from(services.hiveStorage.getAlertConfig());
-          if (!mounted) return;
-          setState(() {
-            _alertConfig = loadedConfig;
-            _configLoaded = true;
-          });
-          return;
+        if (services != null) {
+          debugPrint('[SettingsPage] _initConfig: services found on attempt $i');
+          try {
+            final loadedConfig = Map<String, bool>.from(
+              services.hiveStorage.getAlertConfig(),
+            );
+            if (!mounted) return;
+            setState(() {
+              _alertConfig = loadedConfig;
+              _configLoaded = true;
+            });
+            debugPrint('[SettingsPage] _initConfig: config loaded successfully');
+            return;
+          } catch (configErr) {
+            debugPrint('[SettingsPage] getAlertConfig failed: $configErr');
+            // Use default config if reading fails
+            if (!mounted) return;
+            setState(() {
+              _configLoaded = true;
+              _initError = true;
+              _initErrorMsg = '读取配置失败，使用默认设置';
+            });
+            return;
+          }
         }
       } catch (e) {
         debugPrint('[SettingsPage] _initConfig attempt $i failed: $e');
       }
+
       await Future.delayed(const Duration(milliseconds: 100));
     }
-    // 超时则标记已加载（默认值保持不变）
+
+    // Timeout: use defaults
+    debugPrint('[SettingsPage] _initConfig: timeout, using defaults');
     if (mounted) {
-      setState(() { _configLoaded = true; });
+      setState(() {
+        _configLoaded = true;
+        _initError = true;
+        _initErrorMsg = '服务初始化超时，使用的默认设置';
+      });
     }
   }
 
@@ -69,8 +97,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         padding: const EdgeInsets.all(16),
         children: [
           _buildDataSourceCard(),
+          if (_initError) ...[
+            const SizedBox(height: 8),
+            Card(
+              color: Colors.orange.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber, color: Colors.orange.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _initErrorMsg ?? '初始化时出现问题，设置已使用默认值',
+                        style: TextStyle(color: Colors.orange.shade800),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
-          const Text('播报类型开关', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Text(
+            '播报类型开关',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           _buildAlertSwitches(),
         ],
@@ -183,6 +235,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     try {
       final services = ref.read(appServicesProvider);
       if (services == null) {
+        debugPrint('[SettingsPage] _saveConfig: services is null');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('服务未就绪，请稍后重试')),
@@ -191,8 +244,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         return;
       }
       await services.hiveStorage.saveAlertConfig(_alertConfig);
+      debugPrint('[SettingsPage] _saveConfig: saved successfully');
     } catch (e) {
-      debugPrint('saveConfig failed: $e');
+      debugPrint('[SettingsPage] _saveConfig failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败: $e')),
+        );
+      }
+      return;
     }
 
     if (mounted) {
