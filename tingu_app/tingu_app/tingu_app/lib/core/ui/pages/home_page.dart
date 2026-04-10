@@ -71,55 +71,54 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Future<void> _openSettings() async {
-    if (_settingsNavInProgress) return;
+    // Prevent concurrent navigation calls
+    if (_settingsNavInProgress) {
+      debugPrint('[HomePage] _openSettings: already in progress, ignoring');
+      return;
+    }
     _settingsNavInProgress = true;
-    debugPrint('[HomePage] _openSettings called');
+
     try {
-      if (!mounted) {
-        debugPrint('[HomePage] _openSettings: widget unmounted, aborting');
-        return;
-      }
-      // Navigator.of() throws AssertionError (not Exception) when the context
-      // is detached from the widget tree. Wrap it specifically so we don't
-      // hit the red Flutter error overlay.
-      NavigatorState? nav;
-      try {
-        nav = Navigator.of(context);
-      } on AssertionError catch (e) {
-        debugPrint('[HomePage] Navigator.of AssertionError: $e — context may be detached');
-        if (mounted) {
-          try {
+      debugPrint('[HomePage] _openSettings started');
+
+      // Defer to end-of-frame so we are inside Flutter's draw phase when the
+      // widget tree is complete and context is fully attached.  addPostFrameCallback
+      // is scheduled inside endOfFrame, so if the widget had begun disposing the
+      // callback is never invoked — eliminating the race between mounted checks
+      // and Navigator.of().
+      await SchedulerBinding.instance.endOfFrame;
+      SchedulerBinding.instance.addPostFrameCallback((_) async {
+        try {
+          // Navigator.of called inside the callback — context is guaranteed valid here
+          final nav = Navigator.of(context, rootNavigator: true);
+          debugPrint('[HomePage] Navigator obtained: $nav');
+          await nav.push<void>(
+            MaterialPageRoute(builder: (_) => const SettingsPage()),
+          );
+          debugPrint('[HomePage] Navigator.push completed');
+        } catch (e, st) {
+          debugPrint('[HomePage] inner nav callback FAILED: $e\n$st');
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('无法打开设置页，请稍后重试'),
+              SnackBar(
+                content: Text('无法打开设置页: $e'),
                 backgroundColor: Colors.red,
-                duration: Duration(seconds: 4),
+                duration: const Duration(seconds: 4),
               ),
             );
-          } catch (_) {}
+          }
         }
-        return;
-      }
-      if (!mounted) {
-        debugPrint('[HomePage] _openSettings: unmounted after Navigator.of, aborting');
-        return;
-      }
-      await nav!.push<void>(
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
-      debugPrint('[HomePage] Navigator.push completed OK');
+      });
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
       if (mounted) {
-        try {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('无法打开设置页: $e'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        } catch (_) {}
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('无法打开设置页: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
     } finally {
       _settingsNavInProgress = false;
