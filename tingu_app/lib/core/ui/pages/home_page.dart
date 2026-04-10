@@ -67,20 +67,26 @@ class _HomePageState extends ConsumerState<HomePage>
     super.dispose();
   }
 
-  void _openSettings() {
-    debugPrint('[HomePage] _openSettings called, context.mounted=${context.mounted}');
+  Future<void> _openSettings() async {
+    debugPrint('[HomePage] _openSettings called');
     try {
       final navigator = Navigator.of(context);
       debugPrint('[HomePage] Navigator.of(context) succeeded');
-      navigator.push(
+      await navigator.push(
         MaterialPageRoute(builder: (_) => const SettingsPage()),
-      ).then((result) {
-        debugPrint('[HomePage] Navigator.push completed, result=$result');
-      }).catchError((e) {
-        debugPrint('[HomePage] Navigator.push ERROR: $e');
-      });
+      );
+      debugPrint('[HomePage] Navigator.push completed');
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('无法打开设置页: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
   }
 
