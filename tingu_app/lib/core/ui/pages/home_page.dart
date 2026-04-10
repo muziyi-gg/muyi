@@ -79,25 +79,47 @@ class _HomePageState extends ConsumerState<HomePage>
         debugPrint('[HomePage] _openSettings: widget unmounted, aborting');
         return;
       }
-      final nav = Navigator.of(context);
+      // Navigator.of() throws AssertionError (not Exception) when the context
+      // is detached from the widget tree. Wrap it specifically so we don't
+      // hit the red Flutter error overlay.
+      NavigatorState? nav;
+      try {
+        nav = Navigator.of(context);
+      } on AssertionError catch (e) {
+        debugPrint('[HomePage] Navigator.of AssertionError: $e — context may be detached');
+        if (mounted) {
+          try {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('无法打开设置页，请稍后重试'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          } catch (_) {}
+        }
+        return;
+      }
       if (!mounted) {
         debugPrint('[HomePage] _openSettings: unmounted after Navigator.of, aborting');
         return;
       }
-      await nav.push<void>(
+      await nav!.push<void>(
         MaterialPageRoute(builder: (_) => const SettingsPage()),
       );
       debugPrint('[HomePage] Navigator.push completed OK');
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('无法打开设置页: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('无法打开设置页: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        } catch (_) {}
       }
     } finally {
       _settingsNavInProgress = false;
