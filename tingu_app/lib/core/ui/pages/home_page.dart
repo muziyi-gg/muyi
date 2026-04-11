@@ -23,7 +23,7 @@ class _HomePageState extends ConsumerState<HomePage>
     with TickerProviderStateMixin {
   List<Announcement> _todayAlerts = [];
   bool _isMonitoring = true;
-  bool _settingsNavInProgress = false; // 防重入锁，防止快速双击触发_debugLocked断言
+  Completer<void>? _settingsNav; // 防重入Completer，确保push完成后才解锁
   late AnimationController _pulseController;
   StreamSubscription? _announcementSub;
 
@@ -70,47 +70,33 @@ class _HomePageState extends ConsumerState<HomePage>
     super.dispose();
   }
 
-  Future<void> _openSettings() async {
-    if (_settingsNavInProgress || !mounted) return;
-    _settingsNavInProgress = true;
-    debugPrint('[HomePage] _openSettings called');
+  void _openSettings() {
+    // Completer防重入：push()完成前（Future完成前）不允许再次触发
+    if (_settingsNav != null || !mounted) return;
+    _settingsNav = Completer<void>();
 
-    try {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
-      debugPrint('[HomePage] Navigator.push completed OK');
-    } on AssertionError catch (e) {
-      // Navigator.of() throws AssertionError when context is detached.
-      // Catch it here to avoid Flutter's red error overlay.
-      debugPrint('[HomePage] Navigator.of AssertionError: $e — context may be detached');
-      if (mounted) {
-        try {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('无法打开设置页，请稍后重试'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        } catch (_) {}
+    // defer到下一帧，确保Navigator状态干净
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) { _settingsNav?.complete(); _settingsNav = null; return; }
+      try {
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(builder: (_) => const SettingsPage()),
+        );
+        debugPrint('[HomePage] Navigator.push completed OK');
+      } catch (e) {
+        debugPrint('[HomePage] Navigator.push FAILED: $e');
+        if (mounted) {
+          try {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('无法打开设置页: $e'), backgroundColor: Colors.red),
+            );
+          } catch (_) {}
+        }
+      } finally {
+        _settingsNav?.complete();
+        _settingsNav = null;
       }
-    } catch (e, st) {
-      debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
-      if (mounted) {
-        try {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('无法打开设置页: $e'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        } catch (_) {}
-      }
-    } finally {
-      _settingsNavInProgress = false; // 解锁
-    }
+    });
   }
 
   @override
