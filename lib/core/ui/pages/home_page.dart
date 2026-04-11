@@ -79,12 +79,18 @@ class _HomePageState extends ConsumerState<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) { _settingsNav?.complete(); _settingsNav = null; return; }
       try {
-        await Navigator.of(context).push<void>(
+        Navigator.of(context).push<void>(
           MaterialPageRoute(builder: (_) => const SettingsPage()),
-        );
-        debugPrint('[HomePage] Navigator.push completed OK');
+        ).then((_) {
+          // 页面真正关闭时才清守卫，动画期间重入都会被挡住
+          _settingsNav?.complete();
+          _settingsNav = null;
+        });
+        debugPrint('[HomePage] Navigator.push started');
       } catch (e) {
         debugPrint('[HomePage] Navigator.push FAILED: $e');
+        _settingsNav?.complete();
+        _settingsNav = null;
         if (mounted) {
           try {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -92,9 +98,6 @@ class _HomePageState extends ConsumerState<HomePage>
             );
           } catch (_) {}
         }
-      } finally {
-        _settingsNav?.complete();
-        _settingsNav = null;
       }
     });
   }

@@ -73,21 +73,29 @@ class _HomePageState extends ConsumerState<HomePage>
     // Guard: if widget is no longer mounted, abort immediately.
     // This is the primary re-entry guard — prevents Navigator.push from
     // a detached context, which is the actual cause of _debugLocked.
-    if (!mounted) return;
+    if (_settingsNav != null || !mounted) return;
     debugPrint('[HomePage] _openSettings called');
+
+    _settingsNav = Completer<void>();
 
     try {
       // mounted is the ONLY guard needed here. It is set to false by
       // AutomaticKeepAliveClientMixin when the widget is detached.
       // This prevents re-entrant async calls AND push-from-detached-context.
-      await Navigator.of(context).push<void>(
+      Navigator.of(context).push<void>(
         MaterialPageRoute(builder: (_) => const SettingsPage()),
-      );
-      debugPrint('[HomePage] Navigator.push completed OK');
+      ).then((_) {
+        // 页面真正关闭时才清守卫，动画期间重入都会被挡住
+        _settingsNav?.complete();
+        _settingsNav = null;
+      });
+      debugPrint('[HomePage] Navigator.push started');
     } on AssertionError catch (e) {
       // Navigator.of() throws AssertionError when context is detached.
       // Catch it here to avoid Flutter's red error overlay.
       debugPrint('[HomePage] Navigator.of AssertionError: $e — context may be detached');
+      _settingsNav?.complete();
+      _settingsNav = null;
       if (mounted) {
         try {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -101,6 +109,8 @@ class _HomePageState extends ConsumerState<HomePage>
       }
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
+      _settingsNav?.complete();
+      _settingsNav = null;
       if (mounted) {
         try {
           ScaffoldMessenger.of(context).showSnackBar(
