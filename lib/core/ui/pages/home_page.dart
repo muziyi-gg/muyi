@@ -71,35 +71,19 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   void _openSettings() {
-    // Completer防重入：push()完成前（Future完成前）不允许再次触发
     if (_settingsNav != null || !mounted) return;
     _settingsNav = Completer<void>();
-
-    // defer到下一帧，确保Navigator状态干净
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) { _settingsNav?.complete(); _settingsNav = null; return; }
-      try {
-        Navigator.of(context).push<void>(
-          MaterialPageRoute(builder: (_) => const SettingsPage()),
-        ).then((_) {
-          // 页面真正关闭时才清守卫，动画期间重入都会被挡住
-          _settingsNav?.complete();
-          _settingsNav = null;
-        });
-        debugPrint('[HomePage] Navigator.push started');
-      } catch (e) {
-        debugPrint('[HomePage] Navigator.push FAILED: $e');
+    try {
+      Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => const SettingsPage()),
+      ).then((_) {
         _settingsNav?.complete();
         _settingsNav = null;
-        if (mounted) {
-          try {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('无法打开设置页: $e'), backgroundColor: Colors.red),
-            );
-          } catch (_) {}
-        }
-      }
-    });
+      });
+    } catch (e) {
+      _settingsNav?.complete();
+      _settingsNav = null;
+    }
   }
 
   @override
