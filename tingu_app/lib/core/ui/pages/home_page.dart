@@ -23,6 +23,7 @@ class _HomePageState extends ConsumerState<HomePage>
     with TickerProviderStateMixin {
   List<Announcement> _todayAlerts = [];
   bool _isMonitoring = true;
+  Completer<void>? _settingsNav; // 防重入Completer，确保push完成后才解锁
   late AnimationController _pulseController;
   StreamSubscription? _announcementSub;
 
