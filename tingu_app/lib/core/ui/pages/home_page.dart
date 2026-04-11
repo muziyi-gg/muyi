@@ -23,6 +23,7 @@ class _HomePageState extends ConsumerState<HomePage>
     with TickerProviderStateMixin {
   List<Announcement> _todayAlerts = [];
   bool _isMonitoring = true;
+  bool _settingsNavInProgress = false; // 防重入锁，防止快速双击触发_debugLocked断言
   late AnimationController _pulseController;
   StreamSubscription? _announcementSub;
 
@@ -70,16 +71,11 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Future<void> _openSettings() async {
-    // Guard: if widget is no longer mounted, abort immediately.
-    // This is the primary re-entry guard — prevents Navigator.push from
-    // a detached context, which is the actual cause of _debugLocked.
-    if (!mounted) return;
+    if (_settingsNavInProgress || !mounted) return;
+    _settingsNavInProgress = true;
     debugPrint('[HomePage] _openSettings called');
 
     try {
-      // mounted is the ONLY guard needed here. It is set to false by
-      // AutomaticKeepAliveClientMixin when the widget is detached.
-      // This prevents re-entrant async calls AND push-from-detached-context.
       await Navigator.of(context).push<void>(
         MaterialPageRoute(builder: (_) => const SettingsPage()),
       );
@@ -112,6 +108,8 @@ class _HomePageState extends ConsumerState<HomePage>
           );
         } catch (_) {}
       }
+    } finally {
+      _settingsNavInProgress = false; // 解锁
     }
   }
 
