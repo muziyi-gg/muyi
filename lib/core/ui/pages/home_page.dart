@@ -70,19 +70,27 @@ class _HomePageState extends ConsumerState<HomePage>
     super.dispose();
   }
 
-  void _openSettings() {
+  Future<void> _openSettings() async {
     if (_settingsNav != null || !mounted) return;
     _settingsNav = Completer<void>();
     try {
-      Navigator.of(context).push<void>(
+      await Navigator.of(context).push<void>(
         MaterialPageRoute(builder: (_) => const SettingsPage()),
-      ).then((_) {
-        _settingsNav?.complete();
-        _settingsNav = null;
-      });
-    } catch (e) {
+      );
+      // 设置页成功关闭
       _settingsNav?.complete();
       _settingsNav = null;
+    } catch (e, st) {
+      debugPrint('[HomePage] Navigator.push 失败: type=${e.runtimeType} msg=$e\n$st');
+      _settingsNav?.complete();
+      _settingsNav = null;
+      if (mounted) {
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('无法打开设置页: $e'), backgroundColor: Colors.red),
+          );
+        } catch (_) {}
+      }
     }
   }
 
