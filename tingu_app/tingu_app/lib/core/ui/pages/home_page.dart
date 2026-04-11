@@ -25,7 +25,6 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _isMonitoring = true;
   late AnimationController _pulseController;
   StreamSubscription? _announcementSub;
-  bool _settingsNavInProgress = false;
 
   @override
   void initState() {
@@ -71,43 +70,35 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Future<void> _openSettings() async {
-    if (_settingsNavInProgress) return;
-    _settingsNavInProgress = true;
+    // Guard: if widget is no longer mounted, abort immediately.
+    // This is the primary re-entry guard — prevents Navigator.push from
+    // a detached context, which is the actual cause of _debugLocked.
+    if (!mounted) return;
     debugPrint('[HomePage] _openSettings called');
+
     try {
-      if (!mounted) {
-        debugPrint('[HomePage] _openSettings: widget unmounted, aborting');
-        return;
-      }
-      // Navigator.of() throws AssertionError (not Exception) when the context
-      // is detached from the widget tree. Wrap it specifically so we don't
-      // hit the red Flutter error overlay.
-      NavigatorState? nav;
-      try {
-        nav = Navigator.of(context);
-      } on AssertionError catch (e) {
-        debugPrint('[HomePage] Navigator.of AssertionError: $e — context may be detached');
-        if (mounted) {
-          try {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('无法打开设置页，请稍后重试'),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 4),
-              ),
-            );
-          } catch (_) {}
-        }
-        return;
-      }
-      if (!mounted) {
-        debugPrint('[HomePage] _openSettings: unmounted after Navigator.of, aborting');
-        return;
-      }
-      await nav!.push<void>(
+      // mounted is the ONLY guard needed here. It is set to false by
+      // AutomaticKeepAliveClientMixin when the widget is detached.
+      // This prevents re-entrant async calls AND push-from-detached-context.
+      await Navigator.of(context).push<void>(
         MaterialPageRoute(builder: (_) => const SettingsPage()),
       );
       debugPrint('[HomePage] Navigator.push completed OK');
+    } on AssertionError catch (e) {
+      // Navigator.of() throws AssertionError when context is detached.
+      // Catch it here to avoid Flutter's red error overlay.
+      debugPrint('[HomePage] Navigator.of AssertionError: $e — context may be detached');
+      if (mounted) {
+        try {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('无法打开设置页，请稍后重试'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        } catch (_) {}
+      }
     } catch (e, st) {
       debugPrint('[HomePage] _openSettings FAILED: $e\n$st');
       if (mounted) {
@@ -121,8 +112,6 @@ class _HomePageState extends ConsumerState<HomePage>
           );
         } catch (_) {}
       }
-    } finally {
-      _settingsNavInProgress = false;
     }
   }
 
